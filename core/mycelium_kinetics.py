@@ -1,16 +1,17 @@
 """
-MyceliumKinetics-Pinnacle — Mycelium Fungal Packaging Temperature + Humidity + pH + Light + Oxygen + Pressure Degradation Kinetics
+MyceliumKinetics-Pinnacle — Mycelium Fungal Packaging Temperature + Humidity + pH + Light + Oxygen + Pressure + Microbial Activity Degradation Kinetics
 MercyLogistics Pinnacle Ultramasterpiece — Jan 18 2026
 
-Mycelium composite exponential decay with full environmental factors:
+Mycelium composite exponential decay with full environmental + microbial factors:
 - Base rates at 25°C / 90% RH / pH 7.0 / 100 lux / 21% O₂ / 101 kPa reference
 - Q10 = 2.0 temperature coefficient
 - Humidity Gaussian peak 90% RH (×2.0 max)
 - pH Gaussian peak 7.0 (×1.0 max)
 - Light Gaussian peak low light (×1.2 max), UV inhibition
 - Oxygen Gaussian peak 21% O₂ (×1.5 max aerobic)
-- Pressure Gaussian peak 101 kPa (×1.0), slowdown high compaction/low diffusion
-- Zero microplastic — full fungal metabolization
+- Pressure Gaussian peak 101 kPa (×1.0)
+- Microbial activity Gaussian synergy (temperature 20-30°C + humidity 70-90% → ×1.8 max)
+- Zero microplastic — full fungal + microbial metabolization
 """
 
 import math
@@ -50,9 +51,16 @@ class MyceliumKinetics:
         self.oxygen_peak = 21.0
         self.oxygen_width = 10.0
         self.oxygen_max_boost = 1.5
-        self.pressure_peak = 101.3      # kPa optimal atmospheric
-        self.pressure_width = 20.0      # kPa tolerance
-        self.pressure_max_boost = 1.0   # Neutral at peak
+        self.pressure_peak = 101.3
+        self.pressure_width = 20.0
+        self.pressure_max_boost = 1.0
+        
+        # Microbial activity synergy (temperature + humidity optimal)
+        self.microbial_temp_peak = 25.0
+        self.microbial_temp_width = 10.0
+        self.microbial_rh_peak = 80.0
+        self.microbial_rh_width = 20.0
+        self.microbial_max_boost = 1.8
     
     def temperature_factor(self, temp_c: float) -> float:
         if temp_c < 5 or temp_c > 45:
@@ -86,19 +94,28 @@ class MyceliumKinetics:
         return 1.0 + boost * (self.oxygen_max_boost - 1.0)
     
     def pressure_factor(self, pressure_kpa: float) -> float:
-        """Gaussian neutral at 101.3 kPa, slowdown high compaction"""
-        pressure = max(50, min(150, pressure_kpa))  # Realistic bounds
+        pressure = max(50, min(150, pressure_kpa))
         deviation = pressure - self.pressure_peak
         boost = math.exp(-(deviation ** 2) / (2 * self.pressure_width ** 2))
-        return 0.5 + boost * 0.5  # 0.5-1.0 range (slowdown high pressure)
+        return 0.5 + boost * 0.5
+    
+    def microbial_activity_factor(self, temp_c: float, rh_percent: float) -> float:
+        """Microbial synergy — optimal temperature + humidity"""
+        temp_dev = temp_c - self.microbial_temp_peak
+        rh_dev = rh_percent - self.microbial_rh_peak
+        temp_boost = math.exp(-(temp_dev ** 2) / (2 * self.microbial_temp_width ** 2))
+        rh_boost = math.exp(-(rh_dev ** 2) / (2 * self.microbial_rh_width ** 2))
+        return 1.0 + (temp_boost * rh_boost) * (self.microbial_max_boost - 1.0)
     
     def combined_environment_factor(self, temp_c: float, rh_percent: float, ph: float, lux: float, o2_percent: float, pressure_kpa: float) -> float:
+        microbial = self.microbial_activity_factor(temp_c, rh_percent)
         return (self.temperature_factor(temp_c) *
                 self.humidity_factor(rh_percent) *
                 self.ph_factor(ph) *
                 self.light_factor(lux) *
                 self.oxygen_factor(o2_percent) *
-                self.pressure_factor(pressure_kpa))
+                self.pressure_factor(pressure_kpa) *
+                microbial)
     
     def adjusted_rate(self, base_k: float, temp_c: float, rh_percent: float, ph: float, lux: float, o2_percent: float, pressure_kpa: float) -> float:
         factor = self.combined_environment_factor(temp_c, rh_percent, ph, lux, o2_percent, pressure_kpa)
@@ -112,31 +129,4 @@ class MyceliumKinetics:
         t = -math.log(threshold_g / self.M0) / k
         return round(t, 1)
     
-    def industrial_compost(self, temp_c: float = 60.0, rh_percent: float = 95.0, ph: float = 7.0, lux: float = 50.0, o2_percent: float = 21.0, pressure_kpa: float = 101.3) -> float:
-        k = self.adjusted_rate(self.k_industrial_base, temp_c, rh_percent, ph, lux, o2_percent, pressure_kpa)
-        return self.time_to_degrade(k)
-    
-    def home_compost(self, temp_c: float = 25.0, rh_percent: float = 85.0, ph: float = 6.5, lux: float = 200.0, o2_percent: float = 21.0, pressure_kpa: float = 101.3) -> float:
-        k = self.adjusted_rate(self.k_home_base, temp_c, rh_percent, ph, lux, o2_percent, pressure_kpa)
-        return self.time_to_degrade(k)
-    
-    def soil_burial(self, temp_c: float = 15.0, rh_percent: float = 70.0, ph: float = 6.0, lux: float = 10.0, o2_percent: float = 15.0, pressure_kpa: float = 105.0) -> float:
-        k = self.adjusted_rate(self.k_soil_base, temp_c, rh_percent, ph, lux, o2_percent, pressure_kpa)
-        return self.time_to_degrade(k)
-    
-    def full_degradation_report(self, temp_c: float = 25.0, rh_percent: float = 90.0, ph: float = 7.0, lux: float = 100.0, o2_percent: float = 21.0, pressure_kpa: float = 101.3) -> str:
-        factor = self.combined_environment_factor(temp_c, rh_percent, ph, lux, o2_percent, pressure_kpa)
-        industrial = self.industrial_compost(temp_c + 35, 95, 7.0, 50, 21, 101.3)
-        home = self.home_compost(temp_c, rh_percent, ph, lux, o2_percent, pressure_kpa)
-        soil = self.soil_burial(temp_c - 10, rh_percent - 20, ph - 1, 10, 15, pressure_kpa + 4)
-        return (f"Mycelium packaging ({self.M0}g) at {temp_c}°C / {rh_percent}% RH / pH {ph} / {lux} lux / {o2_percent}% O₂ / {pressure_kpa} kPa (×{factor:.2f} rate factor):\n"
-                f"- Industrial compost (~60°C/95%/pH7/low light/21% O₂/101 kPa): {industrial} days\n"
-                f"- Home compost ({temp_c}°C/{rh_percent}%/pH{ph}/{lux} lux/{o2_percent}% O₂/{pressure_kpa} kPa): {home} days\n"
-                f"- Soil burial (~{temp_c-10}°C/{rh_percent-20}%/pH{ph-1}/dark/{o2_percent-6}% O₂/{pressure_kpa+4} kPa): {soil} days\n"
-                f"Mercy fungal dissolution — earth nurture temperature + humidity + pH + light + oxygen + pressure responsive eternal.")
-
-# Integration test
-if __name__ == "__main__":
-    mycelium = MyceliumKinetics(100.0)
-    print(mycelium.full_degradation_report(25.0, 90.0, 7.0, 100.0, 21.0, 101.3))
-    print(mycelium.full_degradation_report(25.0, 90.0, 7.0, 100.0, 21.0, 120.0))  # High pressure slowdown
+    def industrial_compost(self, temp_c: float = 60.0, rh_percent: float = 95.0, ph: float = 7.0, lux: float = 50.0, o2_percent: float = 21.
