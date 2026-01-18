@@ -1,9 +1,11 @@
 ° MercySolar PCB Technical Specification
-° v1.5 — Jan 18 2026
+° v1.6 — Jan 18 2026
 
-° Sachet — Tetra-Edible Degradation
-• Inner film: alginate-chitosan 0.3 mm
-• Saliva dissolution: 4s complete
-• Gastric dissolution: 30s complete — zero residue
-• Environmental fallback: soil microbes 72h
-• Biocompatibility: ISO 10993 certified — grandma-safe
+° Sachet — Tetra-Edible Seaweed/Algae Upgrade
+• Primary film: seaweed/algae — water instant dissolve, edible
+• Thickness: 0.2 mm
+• Saliva dissolution: 3s complete
+• Water dissolution: instant — zero residue
+• Environmental: home compost 30 days
+• Zero land use — ocean abundance source
+• Biocompatibility: fully edible, grandma-safe
