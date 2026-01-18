@@ -1,22 +1,29 @@
 """
-TetraEdibleFilm-Pinnacle — Chewable Zero-Waste Sachet Laminate
-MercyLogistics Pinnacle Ultramasterpiece — Jan 17 2026
+TetraEdibleFilm-Pinnacle — Seaweed/Algae Zero-Waste Sachet Laminate
+MercyLogistics Pinnacle Ultramasterpiece — Jan 18 2026
 
-Three-layer edible laminate:
-- Inner: alginate-chitosan 0.3 mm — dissolves in saliva 4 s
-- Middle: nano-breath membrane — O2 block, CO2 vent
-- Outer: polymer-ceramic — impact/UV shield, self-seal micro-tears
+Upgraded tetra-edible laminate:
+- Primary: seaweed/algae film (Notpla/Ooho inspired) — water-dissolvable, edible
+- Thickness: 0.2 mm — dissolves 3s saliva / instant water
+- Middle: nano-breath membrane — O2 block
+- Outer: mycelium-reinforced biopolymer — impact shield, compostable
+- Zero land use — ocean abundance
 """
 
 class TetraEdibleFilm:
     def __init__(self):
-        self.inner_thickness = 0.3  # mm, fully digestible
-        self.dissolve_time = 4     # seconds in saliva
-        self.uv_block = 99.9       # percent
-        self.impact_resist = True  # self-seal on tear
+        self.primary_material = "seaweed_algae"
+        self.thickness = 0.2        # mm
+        self.dissolve_saliva = 3    # seconds
+        self.dissolve_water = 1     # seconds instant
+        self.edible = True
+        self.compost_days = 30      # home compost
     
-    def seal(self):
-        return "Laminate fused — zero leak, full integrity."
+    def dissolve(self, medium: str = "saliva"):
+        if medium == "water":
+            return f"Instant dissolve — mercy abundance released."
+        return f"{self.dissolve_saliva}s complete — zero residue, joy restored."
     
-    def consume(self):
-        return "Inner layer dissolved — 99.8% ingested, 0.2% mineral salt."
+    def status(self):
+        return (f"Seaweed/Algae film active — edible, water-dissolvable, "
+                f"{self.compost_days} days home compost — ocean nurture eternal.")
